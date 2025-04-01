@@ -4,19 +4,22 @@ import json
 import getpass
 import time
 
-# Get system username dynamically
-USERNAME = getpass.getuser()
+# Get the base directory of the script
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Constant path to logs directory
-LOCAL_LOGS_DIR = f"C:/Users/{USERNAME}/AppData/Local/PSWatchdog/monitoring/logs"
+# Paths relative to the script location
+LOCAL_LOGS_DIR = os.path.join(BASE_DIR, "logs")
+UPLOADED_FILES_TRACKER = os.path.join(BASE_DIR, "uploaded_files.json")
+
+# SSH Key Path (relative to the user's home directory)
+HOME_DIR = os.path.expanduser("~")
+PRIVATE_KEY_PATH = os.path.join(HOME_DIR, ".ssh", f"id_rsa_{getpass.getuser()}")
 
 # SFTP Configuration
 HOST = "192.168.0.100"
 PORT = 22
 SFTP_USERNAME = "logsink"
-PRIVATE_KEY_PATH = f"C:/Users/{USERNAME}/.ssh/id_rsa_{USERNAME}"
 REMOTE_BASE_DIR = "PSWatchdog"
-UPLOADED_FILES_TRACKER = f"C:/Users/{USERNAME}/AppData/Local/PSWatchdog/monitoring/uploaded_files.json"
 
 
 def load_uploaded_files():
@@ -64,7 +67,7 @@ def upload_files(files_to_upload, filenames):
     transport.connect(username=SFTP_USERNAME, pkey=private_key)
     sftp = paramiko.SFTPClient.from_transport(transport)
 
-    user_dir = f"{REMOTE_BASE_DIR}/{USERNAME}"
+    user_dir = f"{REMOTE_BASE_DIR}/{getpass.getuser()}"
 
     # Create directory on server if it does not exist
     try:
