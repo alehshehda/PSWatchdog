@@ -3,18 +3,21 @@ import json
 from datetime import datetime
 import getpass
 
-LOG_DIR = "logs"
+# Get the script's base directory
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+LOG_DIR = os.path.join(BASE_DIR, "logs")
 os.makedirs(LOG_DIR, exist_ok=True)
+
+USERNAME = getpass.getuser()
 
 def generate_log(rule, proc):
     """Creates and saves a log of detected threats, including the executed command"""
     current_time = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
-    username = getpass.getuser()
     level_map = {"low": "L", "medium": "M", "high": "H"}
-    level = level_map.get(rule.get("level", "medium"), "M")  # Default to "M" if the level is not found in the map
+    level = level_map.get(rule.get("level", "medium"), "M")  
     attack_type = rule.get("title", "Unknown").replace(" ", "_")
 
-    log_filename = f"{level}_{current_time}_{username}_{attack_type}.log"
+    log_filename = f"{level}_{current_time}_{USERNAME}_{attack_type}.log"
     log_path = os.path.join(LOG_DIR, log_filename)
 
     # Retrieve the full command that launched the process
@@ -22,7 +25,7 @@ def generate_log(rule, proc):
 
     log_entry = {
         "timestamp": current_time,
-        "user": username,
+        "user": USERNAME,
         "process": proc.info.get("name", "Unknown"),
         "cmdline": cmdline,
         "rule": {
