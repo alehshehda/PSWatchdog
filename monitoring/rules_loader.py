@@ -3,9 +3,10 @@ import yaml
 import getpass
 import pickle
 
-USERNAME = getpass.getuser()
-RULES_DIR = f"C:/Users/{USERNAME}/AppData/Local/PSWatchdog/monitoring/rules"
-CACHE_FILE = f"C:/Users/{USERNAME}/AppData/Local/PSWatchdog/rules_cache.pkl"
+# Get the script's base directory
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+RULES_DIR = os.path.join(BASE_DIR, "rules")
+CACHE_FILE = os.path.join(BASE_DIR, "rules_cache.pkl")
 
 def get_latest_mod_time(directory):
     """Returns the latest modification time of any file in the directory."""
