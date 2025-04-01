@@ -1,10 +1,13 @@
 import os
 import subprocess
-import shutil
-import getpass  # To get the current username
+
+import getpass
 
 # Get the current username
 username = getpass.getuser()
+
+# IP of the remote host
+remote_host_ip = "192.168.0.100"
 
 # Path to the .ssh directory in the user's home folder
 ssh_dir = os.path.join(os.getenv('USERPROFILE'), '.ssh')
@@ -27,14 +30,6 @@ try:
     print(f"Keys generated:\n Private Key: {ssh_key_path}\n Public Key: {ssh_key_path}.pub")
 except subprocess.CalledProcessError as e:
     print(f"Error generating SSH key: {e}")
-
-# Copy public key to Desktop
-desktop_path = os.path.join(os.getenv('USERPROFILE'), 'Desktop')
-shutil.copy(ssh_key_path + '.pub', os.path.join(desktop_path, f'id_rsa_{username}.pub'))
-print(f"Public key copied to Desktop as 'id_rsa_{username}.pub'. Remove it after sending it to the administrator.")
-
-# Ask user for the IP of the remote host
-remote_host_ip = input("Enter the IP address of the remote host: ")
 
 # Modify SSH config file to include the new host entry
 config_file_path = os.path.join(ssh_dir, 'config')
