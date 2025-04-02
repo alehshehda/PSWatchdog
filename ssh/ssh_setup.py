@@ -12,9 +12,17 @@ remote_host_ip = "192.168.0.100"
 # Path to the .ssh directory in the user's home folder
 ssh_dir = os.path.join(os.getenv('USERPROFILE'), '.ssh')
 
-# Ensure the .ssh directory exists
+# Ensure the .ssh directory exists and make it hidden
 if not os.path.exists(ssh_dir):
     os.makedirs(ssh_dir)
+
+    # Set the folder as hidden on Windows
+    try:
+        subprocess.run(["attrib", "+h", ssh_dir], shell=True, check=True)
+        print(f"Folder {ssh_dir} has been marked as hidden.")
+    except subprocess.CalledProcessError:
+        print(f"Error setting hidden attribute for {ssh_dir}.")
+
 
 # Set key filename with username
 ssh_key_path = os.path.join(ssh_dir, f'id_rsa_{username}')
