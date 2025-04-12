@@ -11,7 +11,7 @@ Edit the Netplan configuration file:
 ```bash
 nano /etc/netplan/50-cloud-init.yaml
 ```
-Modify the file to include the following configuration:
+Modified file should look something like this(it will vary):
 ```yaml
 network:
   version: 2
@@ -33,6 +33,17 @@ network:
           auth:
             key-management: "yourkeymanagement"
             password: "yourpassword"
+```
+Basically you only need to add:
+```yaml
+        - 192.168.0.100/24  # Static IP address
+      routes:
+        - to: 0.0.0.0/0  # Default route
+          via: 192.168.0.1  # Router gateway
+      nameservers:
+        addresses:
+          - 8.8.8.8  # Google DNS
+          - 1.1.1.1  # Cloudflare DNS
 ```
 Apply the new network configuration:
 ```bash
