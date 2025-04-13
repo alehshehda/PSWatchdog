@@ -5,6 +5,7 @@ import time
 from process_monitor import monitor_system
 from sftp_uploader import upload_files_periodically
 from rules_loader import load_rules
+from config import get_server_ip
 
 
 def log_error(log_filename, error_message):
@@ -25,11 +26,11 @@ def safe_monitor(rules):
             print(f"Error in monitoring: {str(e)}. Continuing execution...")
 
 
-def safe_upload():
+def safe_upload(server_ip):
     """Runs the file upload function with error handling to prevent crashes."""
     while True:
         try:
-            upload_files_periodically()
+            upload_files_periodically(server_ip)
         except Exception as e:
             error_message = f"Error in upload_files_periodically: {str(e)}\n{traceback.format_exc()}"
             log_error("error_log_upload.txt", error_message)
@@ -38,12 +39,16 @@ def safe_upload():
 
 def main():
     try:
+
         print("Loading rules...")
         rules = load_rules()  # Load rules before starting threads
         
         if not rules:
             print("No rules loaded. Exiting.")
             return  # Stop execution if rules failed to load
+
+        # Dynamic retrieval of the server IP address from configuration
+        server_ip = get_server_ip()
 
         print("Starting process monitoring and file upload...")
 
@@ -53,7 +58,7 @@ def main():
         monitor_thread.start()
 
         # Start file upload in a separate thread
-        upload_thread = threading.Thread(target=safe_upload)
+        upload_thread = threading.Thread(target=safe_upload, args=(server_ip,))
         upload_thread.daemon = True
         upload_thread.start()
 

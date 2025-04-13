@@ -16,7 +16,6 @@ HOME_DIR = os.path.expanduser("~")
 PRIVATE_KEY_PATH = os.path.join(HOME_DIR, ".ssh", f"id_rsa_{getpass.getuser()}")
 
 # SFTP Configuration
-HOST = "192.168.0.100"
 PORT = 22
 SFTP_USERNAME = "logsink"
 REMOTE_BASE_DIR = "PSWatchdog"
@@ -49,7 +48,7 @@ def get_files_to_upload():
     return [os.path.join(LOCAL_LOGS_DIR, f) for f in new_files], new_files
 
 
-def upload_files(files_to_upload, filenames):
+def upload_files(files_to_upload, filenames, server_ip):
     """Uploads new files to the SFTP server."""
     if not files_to_upload:
         print("No new files to upload.")
@@ -63,7 +62,7 @@ def upload_files(files_to_upload, filenames):
     private_key = paramiko.RSAKey(filename=PRIVATE_KEY_PATH)
 
     # Establish SFTP connection
-    transport = paramiko.Transport((HOST, PORT))
+    transport = paramiko.Transport((server_ip, PORT))
     transport.connect(username=SFTP_USERNAME, pkey=private_key)
     sftp = paramiko.SFTPClient.from_transport(transport)
 
@@ -91,9 +90,9 @@ def upload_files(files_to_upload, filenames):
     print("All new files have been uploaded.")
 
 
-def upload_files_periodically():
+def upload_files_periodically(server_ip):
     """Function to upload files every 30 seconds."""
     while True:
         files, filenames = get_files_to_upload()
-        upload_files(files, filenames)
+        upload_files(files, filenames, server_ip)
         time.sleep(30)  # Wait for 30 seconds before next upload
