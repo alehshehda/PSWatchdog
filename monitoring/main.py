@@ -1,76 +1,94 @@
 import threading
-import traceback
-import datetime
 import time
+import logging
+import logging.handlers
+import signal
+import sys
+
 from process_monitor import monitor_system
-from sftp_uploader import upload_files_periodically
+from sftp_uploader import upload_files
 from rules_loader import load_rules
-from config import get_server_ip
+from server_config import get_server_ip
 
+# Global event for graceful shutdown
+stop_event = threading.Event()
 
-def log_error(log_filename, error_message):
-    """Writes an error message to a specified log file with a timestamp."""
-    timestamp = datetime.datetime.now().strftime("%d-%m-%Y-%H-%M-%S")
-    with open(log_filename, "a") as f:
-        f.write(f"{timestamp}\n{error_message}\n{'-' * 50}\n")
+def setup_logging():
+    """Setup logging with a timed rotating file handler."""
+    file_handler = logging.handlers.TimedRotatingFileHandler(
+        "error_log_main.txt", when="midnight", backupCount=7, encoding="utf-8"
+    )
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s [%(levelname)s] [%(threadName)s] %(message)s',
+        datefmt='%Y-%m-%dT%H:%M:%S'
+    ))
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setFormatter(logging.Formatter(
+        '%(asctime)s [%(levelname)s] [%(threadName)s] %(message)s',
+        datefmt='%Y-%m-%dT%H:%M:%S'
+    ))
+    logging.basicConfig(level=logging.INFO, handlers=[file_handler, stream_handler])
+    logging.info("Logging is set up with TimedRotatingFileHandler.")
 
+def continuous_monitoring(rules, stop_event):
+    """
+    Continuously monitor processes.
+    The monitor_system() function must accept stop_event as a parameter
+    and check its state in its loop to exit gracefully.
+    """
+    try:
+        monitor_system(rules, stop_event)
+    except Exception as e:
+        logging.error("Error in continuous_monitoring: %s", e, exc_info=True)
 
-def safe_monitor(rules):
-    """Runs the process monitoring function with error handling to prevent crashes."""
-    while True:
+def continuous_upload(server_ip, stop_event, upload_interval=30):
+    """
+    Periodically run the upload_files() function.
+    After each upload iteration, wait for upload_interval seconds (or break early if stop_event is set).
+    """
+    while not stop_event.is_set():
         try:
-            monitor_system(rules)  # Pass preloaded rules to avoid reloading them in each iteration
+            upload_files(server_ip)
         except Exception as e:
-            error_message = f"Error in monitor_system: {str(e)}\n{traceback.format_exc()}"
-            log_error("error_log_monitor.txt", error_message)
-            print(f"Error in monitoring: {str(e)}. Continuing execution...")
+            logging.error("Error in continuous_upload: %s", e, exc_info=True)
+        # Wait upload_interval seconds in small increments to check stop_event regularly.
+        for _ in range(upload_interval):
+            if stop_event.is_set():
+                break
+            time.sleep(1)
 
-
-def safe_upload(server_ip):
-    """Runs the file upload function with error handling to prevent crashes."""
-    while True:
-        try:
-            upload_files_periodically(server_ip)
-        except Exception as e:
-            error_message = f"Error in upload_files_periodically: {str(e)}\n{traceback.format_exc()}"
-            log_error("error_log_upload.txt", error_message)
-            print(f"Error in file upload: {str(e)}. Continuing execution...")
-
+def graceful_exit(signum, frame):
+    """Handle graceful shutdown when receiving termination signals."""
+    logging.info("Termination signal received. Shutting down...")
+    stop_event.set()
 
 def main():
-    try:
+    setup_logging()
+    # Register signal handlers for graceful shutdown
+    signal.signal(signal.SIGINT, graceful_exit)
+    signal.signal(signal.SIGTERM, graceful_exit)
 
-        print("Loading rules...")
-        rules = load_rules()  # Load rules before starting threads
-        
-        if not rules:
-            print("No rules loaded. Exiting.")
-            return  # Stop execution if rules failed to load
+    logging.info("Loading rules...")
+    rules = load_rules()
+    if not rules:
+        logging.warning("No rules loaded. Exiting.")
+        sys.exit(0)
 
-        # Dynamic retrieval of the server IP address from configuration
-        server_ip = get_server_ip()
+    server_ip = get_server_ip()
+    logging.info("Starting continuous monitoring and periodic upload tasks...")
 
-        print("Starting process monitoring and file upload...")
+    # Create two threads – one for monitoring and one for uploading.
+    monitor_thread = threading.Thread(target=continuous_monitoring, args=(rules, stop_event), name="MonitorThread")
+    uploader_thread = threading.Thread(target=continuous_upload, args=(server_ip, stop_event, 30), name="UploaderThread")
 
-        # Start process monitoring in a separate thread
-        monitor_thread = threading.Thread(target=safe_monitor, args=(rules,))
-        monitor_thread.daemon = True  # Ensure the thread terminates when the main program exits
-        monitor_thread.start()
+    monitor_thread.start()
+    uploader_thread.start()
 
-        # Start file upload in a separate thread
-        upload_thread = threading.Thread(target=safe_upload, args=(server_ip,))
-        upload_thread.daemon = True
-        upload_thread.start()
+    # The main thread waits for both threads to finish.
+    monitor_thread.join()
+    uploader_thread.join()
 
-        # Keep the program running indefinitely
-        while True:
-            time.sleep(1)  # Prevents high CPU usage by adding a small delay
-
-    except Exception as e:
-        error_message = f"Critical error in main: {str(e)}\n{traceback.format_exc()}"
-        log_error("error_log_main.txt", error_message)
-        print(f"Critical error: {str(e)}. Details saved in error_log_main.txt")
-
+    logging.info("Program terminated gracefully.")
 
 if __name__ == "__main__":
     main()
