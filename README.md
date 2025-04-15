@@ -2,7 +2,7 @@
 ## Implementation of a User Activity Monitoring System in PowerShell
 
 ### **Configuration of the Remote Server**
-This guide provides step-by-step instructions for configuring a remote Ubuntu 24.10 server. The configuration sets up an SFTP jail for securely storing logs sent from users. All configurations should be performed while logged in as **root**.
+This guide provides step-by-step instructions for configuring a remote Ubuntu 24.04 server. The configuration sets up an SFTP jail for securely storing logs sent from users. All configurations should be performed while logged in as **root**.
 
 ---
 
