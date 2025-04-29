@@ -4,9 +4,10 @@ import logging
 import logging.handlers
 import signal
 import sys
+import getpass
 
 from process_monitor import monitor_system
-from sftp_uploader import upload_files
+from sftp_uploader import upload_files, init_sftp
 from rules_loader import load_rules
 from server_config import get_server_ip
 
@@ -64,6 +65,7 @@ def graceful_exit(signum, frame):
 
 def main():
     setup_logging()
+
     # Register signal handlers for graceful shutdown
     signal.signal(signal.SIGINT, graceful_exit)
     signal.signal(signal.SIGTERM, graceful_exit)
@@ -75,16 +77,20 @@ def main():
         sys.exit(0)
 
     server_ip = get_server_ip()
-    logging.info("Starting continuous monitoring and periodic upload tasks...")
+    logging.info("Initializing SFTP (UUID generation and remote directory creation)...")
+    user = getpass.getuser()
+    # One-time SFTP init: generate or load UUID and create remote user dir
+    init_sftp(user, server_ip)
 
-    # Create two threads – one for monitoring and one for uploading.
+    logging.info("Starting continuous monitoring and periodic upload tasks...")
+    # Create threads for monitoring and uploading
     monitor_thread = threading.Thread(target=continuous_monitoring, args=(rules, stop_event), name="MonitorThread")
     uploader_thread = threading.Thread(target=continuous_upload, args=(server_ip, stop_event, 30), name="UploaderThread")
 
     monitor_thread.start()
     uploader_thread.start()
 
-    # The main thread waits for both threads to finish.
+    # Wait for both threads to finish
     monitor_thread.join()
     uploader_thread.join()
 
