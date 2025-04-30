@@ -163,7 +163,7 @@ After connecting, verify that the logs directory is accessible:
 ```bash
 ls -l
 ```
-If configured correctly, the user **logsink** will only have access to `/var/log/PSWatchdog` through **SFTP**, without shell access, also has restricted access and can only put files into the remote user's diretory.
+If configured correctly, the user **logsink** will only have access to `/var/log/PSWatchdog` through **SFTP**, without shell access, also has restricted access and can only put files into the remote user's directory.
 
 ---
 
