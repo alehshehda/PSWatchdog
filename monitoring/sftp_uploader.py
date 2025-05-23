@@ -84,7 +84,7 @@ def get_new_log_entries():
         logger.error("Error while reading log entries: %s", e)
         return "", last_offset
 
-def get_or_create_uuid(server_ip):
+def get_or_create_uuid(server_ip, server_port=PORT):
     """
     Retrieve or generate a unique user UUID for SFTP uploads.
     Reuses a locally stored UUID if available; otherwise connects to the remote host
@@ -97,7 +97,7 @@ def get_or_create_uuid(server_ip):
     # Load SSH key and establish SFTP connection to check existing remote directories
     try:
         private_key = paramiko.RSAKey(filename=PRIVATE_KEY_PATH)
-        transport = paramiko.Transport((server_ip, PORT))
+        transport = paramiko.Transport((server_ip, server_port))
         transport.connect(username=SFTP_USERNAME, pkey=private_key)
         sftp = paramiko.SFTPClient.from_transport(transport)
     except Exception as e:
@@ -128,18 +128,18 @@ def get_or_create_uuid(server_ip):
         transport.close()
 
 
-def init_sftp(user, server_ip):
+def init_sftp(user, server_ip, server_port=PORT):
     """
     One-time SFTP initialization at startup:
       1) Ensures UUID exists (or is generated).
       2) Creates the remote user directory on the server if missing.
     """
-    uuid_str = get_or_create_uuid(server_ip)
+    uuid_str = get_or_create_uuid(server_ip, server_port)
     remote_dir = f"{REMOTE_BASE_DIR}/{user}_{uuid_str}"
 
     try:
         private_key = paramiko.RSAKey(filename=PRIVATE_KEY_PATH)
-        transport = paramiko.Transport((server_ip, PORT))
+        transport = paramiko.Transport((server_ip, server_port))
         transport.connect(username=SFTP_USERNAME, pkey=private_key)
         sftp = paramiko.SFTPClient.from_transport(transport)
 
@@ -189,7 +189,7 @@ def upload_data(data, remote_file_path, server_ip, server_port):
         return
 
     try:
-        transport = paramiko.Transport((server_ip, PORT))
+        transport = paramiko.Transport((server_ip, server_port))
         transport.connect(username=SFTP_USERNAME, pkey=private_key)
         sftp = paramiko.SFTPClient.from_transport(transport)
     except Exception as e:
@@ -233,7 +233,7 @@ def upload_files(server_ip, server_port=PORT):
 
     if data:
         user = getpass.getuser()
-        uuid_str = get_or_create_uuid(server_ip)
+        uuid_str = get_or_create_uuid(server_ip, server_port)
         remote_user_dir = f"{REMOTE_BASE_DIR}/{user}_{uuid_str}"
 
         timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")

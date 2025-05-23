@@ -80,7 +80,7 @@ def main():
     logging.info("Initializing SFTP (UUID generation and remote directory creation)...")
     user = getpass.getuser()
     # One-time SFTP init: generate or load UUID and create remote user dir
-    init_sftp(user, server_ip)
+    init_sftp(user, server_ip, server_port)
 
     logging.info("Starting continuous monitoring and periodic upload tasks...")
     # Create threads for monitoring and uploading

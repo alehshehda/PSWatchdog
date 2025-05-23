@@ -37,3 +37,4 @@ error_log_main.txt
 monitoring/logs/*
 monitoring/rules_cache.*
 monitoring/server_config.json
+monitoring/uuid.txt

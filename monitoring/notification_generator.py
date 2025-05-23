@@ -1,3 +1,4 @@
+import html
 import requests
 import hashlib
 import json
@@ -8,8 +9,9 @@ import os
 load_dotenv()  # Load variables from .env
 
 TOKEN = os.getenv("TELEGRAM_TOKEN")
-IDS = os.getenv("TELEGRAM_CHAT_IDS").split(",")
-print(f"Chat IDs: {IDS}")
+IDS = os.getenv("TELEGRAM_CHAT_IDS", "").split(",")
+if not IDS or IDS == [""]:
+    raise ValueError("TELEGRAM_CHAT_IDS environment variable is not set or is empty.")
 url_updates = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
 
 response = requests.get(url_updates)
