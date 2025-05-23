@@ -7,15 +7,13 @@ import os
 
 
 load_dotenv()  # Load variables from .env
-
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 IDS = os.getenv("TELEGRAM_CHAT_IDS", "").split(",")
-if not IDS or IDS == [""]:
-    raise ValueError("TELEGRAM_CHAT_IDS environment variable is not set or is empty.")
 url_updates = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
-
-response = requests.get(url_updates)
-print(response.json())
+if not IDS or IDS == [""]:
+    response = requests.get(url_updates)
+    print(response.json())
+    raise ValueError("TELEGRAM_CHAT_IDS environment variable is not set or is empty. Send message to the bot and get your chat ID into .env and start script again.")
 
 # Store hashes of sent logs to avoid duplicates
 _sent_log_hashes = set()

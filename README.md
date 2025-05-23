@@ -167,3 +167,14 @@ If configured correctly, the user **logsink** will only have access to `/var/log
 
 ---
 
+## Setup Telegram Bot
+
+**.env**
+```sh
+TELEGRAM_TOKEN=123:ABCD
+TELEGRAM_CHAT_IDS=123456789,123456780
+```
+- Fill .env with **TELEGRAM_TOKEN**
+- Go to [Telegram bot](http://t.me/PSWatchdog_bot) and write any message to the bot
+- Run script and find ```chat': {'id': 123456789``` in stdout
+- Fill **TELEGRAM_CHAT_IDS** (can use many chat ids separated by coma)
