@@ -120,7 +120,7 @@ Add the following settings at the end of the file:
 ```bash
 # Restrict SFTP access for logsink user
 Match User logsink  
-    ForceCommand internal-sftp  
+    ForceCommand internal-sftp -u 0477  
     AuthorizedKeysFile /home/logsink/.ssh/authorized_keys  
     ChrootDirectory /sftp-jail/var/log  
     PasswordAuthentication no  
@@ -163,7 +163,7 @@ After connecting, verify that the logs directory is accessible:
 ```bash
 ls -l
 ```
-If configured correctly, the user **logsink** will only have access to `/var/log/PSWatchdog` through **SFTP**, without shell access.
+If configured correctly, the user **logsink** will only have access to `/var/log/PSWatchdog` through **SFTP**, without shell access, also has restricted access and can only put files into the remote user's directory.
 
 ---
 
