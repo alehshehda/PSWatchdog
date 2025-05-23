@@ -58,37 +58,42 @@ def save_config(config):
         logger.error("Error writing configuration file: %s", e)
 
 
-def get_server_ip():
+def get_server_ip_and_port():
     """
-    Retrieves the server IP address from the JSON configuration file.
-    If the file does not exist or does not contain a valid IP address,
-    prompts the user for a valid IP, saves it to the file, and returns it.
+    Retrieves the server IP address and port from the JSON configuration file.
+    If the file does not exist or does not contain valid values,
+    prompts the user for valid values, saves them to the file, and returns them.
     """
-    # Load the existing configuration from the JSON file.
     config = load_config()
     ip = config.get("server_ip")
+    port = config.get("server_port")
 
-    # Check if a valid IP is already set in the configuration.
-    if ip and is_valid_ip(ip):
-        # Return the valid IP found in the configuration file.
-        return ip
-    else:
+    # Validate IP
+    if not (ip and is_valid_ip(ip)):
         if ip:
-            # Inform the user if an invalid IP was found.
             logger.info("Invalid IP address found in configuration: %s", ip)
         else:
-            # Inform the user that there is no IP configured.
             logger.info("Server IP not found in configuration.")
+        while True:
+            ip = input("Enter the server IP address: ")
+            if is_valid_ip(ip):
+                break
+            print("Invalid IP address provided. Please enter a valid IP address.")
+        config["server_ip"] = ip
 
-    # Continuously prompt the user until a valid IP address is provided.
-    while True:
-        ip = input("Enter the server IP address: ")
-        if is_valid_ip(ip):
-            break
-        print("Invalid IP address provided. Please enter a valid IP address.")
+    # Validate Port
+    if not (port and str(port).isdigit() and 1 <= int(port) <= 65535):
+        if port:
+            logger.info("Invalid port found in configuration: %s", port)
+        else:
+            logger.info("Server port not found in configuration.")
+        while True:
+            port_input = input("Enter the server port (1-65535): ")
+            if port_input.isdigit() and 1 <= int(port_input) <= 65535:
+                port = int(port_input)
+                break
+            print("Invalid port. Please enter a number between 1 and 65535.")
+        config["server_port"] = port
 
-    # Save the valid IP address into the configuration file.
-    config["server_ip"] = ip
     save_config(config)
-
-    return ip
+    return ip, int(port)

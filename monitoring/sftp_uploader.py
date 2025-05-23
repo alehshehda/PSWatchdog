@@ -5,6 +5,7 @@ import time
 import logging
 import paramiko
 import tempfile
+import sys
 
 # Determine base directory and create a logs directory if it does not exist.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -74,7 +75,7 @@ def get_new_log_entries():
         logger.error("Error while reading log entries: %s", e)
         return "", last_offset
 
-def upload_data(data, remote_file_path, server_ip):
+def upload_data(data, remote_file_path, server_ip, server_port):
     """
     Upload the provided data to the remote server via SFTP.
     The data is first written to a temporary file. If any step fails, the temporary file is removed.
@@ -102,7 +103,7 @@ def upload_data(data, remote_file_path, server_ip):
         return
     try:
         # Establish an SFTP connection using the private key for authentication.
-        transport = paramiko.Transport((server_ip, PORT))
+        transport = paramiko.Transport((server_ip, server_port))
         transport.connect(username=SFTP_USERNAME, pkey=private_key)
         sftp = paramiko.SFTPClient.from_transport(transport)
     except Exception as e:
@@ -134,7 +135,7 @@ def upload_data(data, remote_file_path, server_ip):
         transport.close()
         os.remove(tmp_file_path)  # Always remove the temporary file.
 
-def upload_files(server_ip):
+def upload_files(server_ip, server_port=PORT):
     """
     Main function for the upload task.
     Gathers new log entries, constructs a unique remote file name based on the current timestamp,
@@ -146,7 +147,7 @@ def upload_files(server_ip):
         timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
         remote_file = f"{getpass.getuser()}_{timestamp}_threats.log"
         remote_file_path = f"{REMOTE_BASE_DIR}/{getpass.getuser()}/{remote_file}"
-        upload_data(data, remote_file_path, server_ip)  # Perform the file upload.
+        upload_data(data, remote_file_path, server_ip, server_port)  # Perform the file upload.
         save_last_offset(new_offset)  # Update the offset file after successful upload.
     else:
         logger.debug("No new entries to upload at this time.")
