@@ -9,7 +9,7 @@ import getpass
 from process_monitor import monitor_system
 from sftp_uploader import upload_files, init_sftp
 from rules_loader import load_rules
-from server_config import get_server_ip
+from server_config import get_server_ip_and_port
 
 # Global event for graceful shutdown
 stop_event = threading.Event()
@@ -42,14 +42,14 @@ def continuous_monitoring(rules, stop_event):
     except Exception as e:
         logging.error("Error in continuous_monitoring: %s", e, exc_info=True)
 
-def continuous_upload(server_ip, stop_event, upload_interval=30):
+def continuous_upload(server_ip, stop_event, upload_interval=30, server_port=22):
     """
     Periodically run the upload_files() function.
     After each upload iteration, wait for upload_interval seconds (or break early if stop_event is set).
     """
     while not stop_event.is_set():
         try:
-            upload_files(server_ip)
+            upload_files(server_ip, server_port)
         except Exception as e:
             logging.error("Error in continuous_upload: %s", e, exc_info=True)
         # Wait upload_interval seconds in small increments to check stop_event regularly.
@@ -76,7 +76,7 @@ def main():
         logging.warning("No rules loaded. Exiting.")
         sys.exit(0)
 
-    server_ip = get_server_ip()
+    server_ip, server_port = get_server_ip_and_port()
     logging.info("Initializing SFTP (UUID generation and remote directory creation)...")
     user = getpass.getuser()
     # One-time SFTP init: generate or load UUID and create remote user dir
@@ -85,7 +85,7 @@ def main():
     logging.info("Starting continuous monitoring and periodic upload tasks...")
     # Create threads for monitoring and uploading
     monitor_thread = threading.Thread(target=continuous_monitoring, args=(rules, stop_event), name="MonitorThread")
-    uploader_thread = threading.Thread(target=continuous_upload, args=(server_ip, stop_event, 30), name="UploaderThread")
+    uploader_thread = threading.Thread(target=continuous_upload, args=(server_ip, stop_event, 30, server_port), name="UploaderThread")
 
     monitor_thread.start()
     uploader_thread.start()

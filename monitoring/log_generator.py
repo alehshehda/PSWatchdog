@@ -5,7 +5,7 @@ from logging.handlers import RotatingFileHandler
 import getpass
 from datetime import datetime
 import base64
-
+from notification_generator import send_notification
 # Set up the base directory and the logs folder.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_DIR = os.path.join(BASE_DIR, "logs")
@@ -137,5 +137,12 @@ def generate_log(rule, proc):
     try:
         logger.info(json.dumps(log_entry))
         print(f"Threat detected! Log entry created at {current_time}")
+        # Send the log entry to the telegram bot for notification.
+        send_notification(log_entry, rule.get("level", "medium"))
+    except OSError as e:
+        logger.error("Failed to write log entry: %s", e)
+    except json.JSONDecodeError as e:
+        logger.error("Failed to encode log entry to JSON: %s", e)
+
     except Exception as e:
         logger.exception("Failed to write log entry")

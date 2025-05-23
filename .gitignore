@@ -24,7 +24,6 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 .env
-.env.*
 
 build/
 dist/
@@ -33,3 +32,8 @@ dist/
 
 node_modules/
 package-lock.json
+
+error_log_main.txt
+monitoring/logs/*
+monitoring/rules_cache.*
+monitoring/server_config.json

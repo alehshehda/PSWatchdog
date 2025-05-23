@@ -4,6 +4,7 @@ import time
 import logging
 import paramiko
 import tempfile
+import sys
 import uuid
 
 # Determine base directory (this file’s folder) and project root (parent of BASE_DIR)
@@ -83,7 +84,6 @@ def get_new_log_entries():
         logger.error("Error while reading log entries: %s", e)
         return "", last_offset
 
-
 def get_or_create_uuid(server_ip):
     """
     Retrieve or generate a unique user UUID for SFTP uploads.
@@ -160,7 +160,7 @@ def init_sftp(user, server_ip):
             pass
 
 
-def upload_data(data, remote_file_path, server_ip):
+def upload_data(data, remote_file_path, server_ip, server_port):
     """
     Upload the provided data to the remote server via SFTP.
     The data is first written to a temporary file. If any step fails, the temporary file is removed.
@@ -222,7 +222,7 @@ def upload_data(data, remote_file_path, server_ip):
         os.remove(tmp_file_path)
 
 
-def upload_files(server_ip):
+def upload_files(server_ip, server_port=PORT):
     """
     Main function for the upload task.
     Gathers new log entries, constructs a unique remote file name based on the current timestamp,
@@ -237,10 +237,11 @@ def upload_files(server_ip):
         remote_user_dir = f"{REMOTE_BASE_DIR}/{user}_{uuid_str}"
 
         timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
+
         remote_file = f"{user}_{timestamp}_threats.log"
         remote_file_path = f"{remote_user_dir}/{remote_file}"
 
-        upload_data(data, remote_file_path, server_ip)
+        upload_data(data, remote_file_path, server_ip, server_port)
         save_last_offset(new_offset)
     else:
         logger.debug("No new entries to upload at this time.")
