@@ -53,15 +53,15 @@ def send_notification(logs: dict, severity: str):
         rule = logs.get("rule", {})
         log_message = (
             f"<b>PSWatchdog Alert</b>\n"
-            f"<b>Severity:</b> {severity}\n"
-            f"<b>User:</b> {logs.get('user', 'Unknown')}\n"
-            f"<b>Process:</b> {logs.get('process', 'Unknown')} (PID: {logs.get('pid', 'Unknown')})\n"
-            f"<b>Cmdline:</b> {logs.get('cmdline', 'N/A')}\n"
-            f"<b>Executed Code:</b> {logs.get('executed_code', 'N/A')}\n"
-            f"<b>Rule:</b> {rule.get('title', 'Unknown')} (ID: {rule.get('id', 'Unknown')})\n"
-            f"<b>Description:</b> {rule.get('description', 'No description available')}\n"
-            f"<b>Tags:</b> {', '.join(rule.get('tags', []))}\n"
-            f"<b>References:</b> {'; '.join(rule.get('references', []))}\n"
+            f"<b>Severity:</b> {html.escape(severity)}\n"
+            f"<b>User:</b> {html.escape(logs.get('user', 'Unknown'))}\n"
+            f"<b>Process:</b> {html.escape(logs.get('process', 'Unknown'))} (PID: {html.escape(str(logs.get('pid', 'Unknown')))})\n"
+            f"<b>Cmdline:</b> {html.escape(logs.get('cmdline', 'N/A'))}\n"
+            f"<b>Executed Code:</b> {html.escape(logs.get('executed_code', 'N/A'))}\n"
+            f"<b>Rule:</b> {html.escape(rule.get('title', 'Unknown'))} (ID: {html.escape(rule.get('id', 'Unknown'))})\n"
+            f"<b>Description:</b> {html.escape(rule.get('description', 'No description available'))}\n"
+            f"<b>Tags:</b> {html.escape(', '.join(rule.get('tags', [])))}\n"
+            f"<b>References:</b> {html.escape('; '.join(rule.get('references', [])))}\n"
         )
         params = {
             "chat_id": chat_id,
